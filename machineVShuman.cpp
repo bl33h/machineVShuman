@@ -26,7 +26,7 @@ int presupuesto;
 int proyeccion;
 int cantPiezas;
 int ensamblajeMaquina;
-int piezasPMin
+int piezasPMin;
 pthread_mutex_t mutex;
 
 struct datosEmpresa
