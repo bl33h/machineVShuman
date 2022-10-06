@@ -17,9 +17,10 @@ Last modification: 06/10/2022
 #include <iostream>
 using namespace std;
 string tipoTrabajo;
+int cantProcesos;
 /* meter esta en el main por la cantidad de Personal int tiempoEjecucion[cantidadPersonal];*/
-int salarioOperadores;
-int salarioAyudantes;
+int inversionMaquina;
+int salarioPersonal;
 int cantidadPersonal;
 int presupuesto;
 int proyeccion;
@@ -44,3 +45,23 @@ struct costo{
     int costoFijoMateriaPrima;
     int costoVariable;  
 };
+
+int main(){
+    cout << "- B I E N V E N I D O -";
+    cout << "\nTipo de trabajo que va a realizar: ";
+    cin >> tipoTrabajo;
+    cout << "Cantidad de procesos a realizar: ";
+    cin >> cantProcesos;
+    cout << "Cantidad de piezas totales a producir: ";
+    cin >> cantPiezas;
+    cout << "Cantidad de personal: ";
+    cin >> cantidadPersonal;
+    cout << "Salario del personal: ";
+    cin >> salarioPersonal;
+    cout << "Inversion de la maquina: ";
+    cin >> inversionMaquina;
+    cout << "Presupuesto inicial: ";
+    cin >> presupuesto;
+
+    cout << "Inicializando los procesos...";
+}
