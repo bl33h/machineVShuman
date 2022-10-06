@@ -26,6 +26,7 @@ int presupuesto;
 int proyeccion;
 int cantPiezas;
 int ensamblajeMaquina;
+int piezasPMin
 pthread_mutex_t mutex;
 
 struct datosEmpresa
@@ -52,6 +53,8 @@ int main(){
     cin >> tipoTrabajo;
     cout << "Cantidad de procesos a realizar: ";
     cin >> cantProcesos;
+    cout << "Piezas por minuto: ";
+    cin >> piezasPMin;
     cout << "Cantidad de piezas totales a producir: ";
     cin >> cantPiezas;
     cout << "Cantidad de personal: ";
@@ -63,5 +66,17 @@ int main(){
     cout << "Presupuesto inicial: ";
     cin >> presupuesto;
 
+
     cout << "Inicializando los procesos...";
+}
+
+void* costoProduccion(void *arg){
+    costo *x;
+    x = (costo*)arg;
+    int costoFijoTotal = (x-> costoFijoEnergia) + (x -> costoFijoAgua) + (x-> costoFijoMateriaPrima);
+
+    int costoVariable = (cantPiezas/piezasPMin) * 2;
+
+    int costoTotal = costoFijoTotal + costoVariable;
+
 }
