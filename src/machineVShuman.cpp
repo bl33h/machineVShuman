@@ -2,7 +2,7 @@
 Copyright (C), 2022-2023, bl33h, MelissaPerez09, FabianJuarez182, SebasJuarez
 @author Sara Echeverria, Melissa Perez, Fabian Juarez, Sebastian Juarez
 FileName: machineVShuman
-@version: IV
+@version: V
 Creation: 06/10/2022
 Last modification: 10/10/2022
 ----------------------------------------------------------------------------------------------------
@@ -21,14 +21,17 @@ using namespace std;
 
 // Variables
 string tipoTrabajo;
-//int cantProcesos;
+int cantProcesos;
 /* meter esta en el main por la cantidad de Personal int tiempoEjecucion[cantidadPersonal];*/
 int inversionMaquina;
-int salarioPersonal;
 int cantidadPersonal;
+int cantidadOperadores;
+int salarioPersonal;
+int cantidadOperadores;
+int salarioOperadores;
 int presupuesto;
 int proyeccion;
-//int cantPiezas;
+int cantPiezas;
 int ensamblajeMaquina;
 int piezasPMin;
 pthread_mutex_t mutex;
@@ -94,23 +97,32 @@ void* procesoMaquina(void *arg)
 }
 
 // --- Main ---
-int main(){
-    cout << "- B I E N V E N I D O -";
-    cout << "\nFinalidad de su empresa: ";
+int main()
+{
+    // Inputs
+    cout << "--- B I E N V E N I D O ---";
+    // Informacion general de la empresa
+    cout << "\nFinalidad de su empresa (fabrica, maquila, entre otros): ";
     cin >> tipoTrabajo;
-    cout << "Cantidad de procesos a realizar: ";
+    cout << "Cantidad de procesos a realizar en la produccion: ";
     cin >> cantProcesos;
-    cout << "Piezas por minuto: ";
+    cout << "Piezas producidas por minuto: ";
     cin >> piezasPMin;
     cout << "Cantidad de piezas totales a producir: ";
     cin >> cantPiezas;
-    cout << "Cantidad de personal: ";
+    cout << "\nNumero de personas que conforman el personal (sin contar a los operadores): ";
     cin >> cantidadPersonal;
-    cout << "Salario del personal: ";
+    cout << "\nNumero de personas que conforman al grupo de los operadores: ";
+    cin >> cantidadOperadores;
+    // Inversion en maquina y personal humano
+    cout << "Salario del personal en dolares ($): ";
     cin >> salarioPersonal;
-    cout << "Inversion de la maquina: ";
+    cout << "Salario de los operadores en dolares ($): ";
+    cin >> salarioOperadores;
+    cout << "Inversion de la maquina en dolares ($): ";
     cin >> inversionMaquina;
-    cout << "Presupuesto inicial: ";
+    // Presupuesto
+    cout << "Presupuesto inicial en dolares ($): ";
     cin >> presupuesto;
     cout << "Inicializando los procesos...";
 }
