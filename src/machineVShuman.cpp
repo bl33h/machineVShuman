@@ -25,7 +25,6 @@ int cantProcesos;
 /* meter esta en el main por la cantidad de Personal int tiempoEjecucion[cantidadPersonal];*/
 int inversionMaquina;
 int cantidadPersonal;
-int cantidadOperadores;
 int salarioPersonal;
 int cantidadOperadores;
 int salarioOperadores;
