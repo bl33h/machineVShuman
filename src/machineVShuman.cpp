@@ -8,14 +8,21 @@ Last modification: 22/10/2022
 ----------------------------------------------------------------------------------------------------
 * Descripcion: 
 * Establecer la eficiencia y rentabilidad a largo plazo de la produccion de una 
-* máquina en comparacion a la que el personal humano realizaria.
+* máquina en comparacion a la que el personal humano realizaria. 
+
+* Condiciones:
+* La cantidad de personal en las areas debe de ir en disminucion (siendo el area1 > area2 > area3)
 -----------------------------------------------------------------*/
+
 
 // Librerias
 #include <unistd.h>
 #include <pthread.h>
 #include <iostream>
+#include <semaphore.h>
 using namespace std;
+
+
 
 // Threads mutex y condicional
 pthread_mutex_t piezas;
@@ -29,8 +36,9 @@ int salarioPersonal;
 // Variables fijas
 int cantProcesos = 1;               //hilos a crear
 int cantPiezasTotales = 10;         //piezas totales a producir
-int cantidadPersonalArea1 = 1;      //personas en area 1
-int cantidadPersonalArea2 = 1;      //personas en area 2
+int cantidadPiezasPorArea1 = 0;
+int cantidadPersonalArea1 = 2;      //personas en area 1
+int cantidadPersonalArea2 = 2;      //personas en area 2
 int cantidadPersonalArea3 = 1;      //personas en area 3
 int ensambladosArea1 = 0;           //contador para piezas ensambladas en area 1
 int ensambladosArea2 = 0;           //contador para piezas ensambladas en area 2
@@ -60,7 +68,7 @@ void* costoProduccion(void *arg)
 void* area1(void* arg){
 
     //produccion de piezas en el area 1
-    for (int i = 0; i < cantPiezasTotales / cantidadPersonalArea1; i++){
+    for (int i = 0; i < cantidadPiezasPorArea1; i++){
         pthread_mutex_lock(&piezas);
         ensambladosArea1++;
         cout << "Persona del AREA 1: ensamblo 1 pieza" << endl;
@@ -85,17 +93,21 @@ void* area2(void* arg){
     cout << "''''''''''''''''''''" << endl;
 
     //produccion de piezas en el area 2
-    for (int i = 0; i < ensambladosArea1 / cantidadPersonalArea2; i++){
-        pthread_mutex_lock(&piezas);
-        ensambladosArea2++;
-        cout << "Persona del AREA 2: ensamblo 1 pieza" << endl;
-        pthread_mutex_unlock(&piezas);
-        pthread_cond_signal(&producidas);
-        sleep(1);
+    if(ensambladosArea1 != cantPiezasTotales && ensambladosArea2 != cantPiezasTotales){
+        for (int i = 0; i < ensambladosArea1 / cantidadPersonalArea2 ; i++){
+            pthread_mutex_lock(&piezas);
+            ensambladosArea2++;
+            cout << "Persona del AREA 2: ensamblo 1 pieza" << endl;
+            pthread_mutex_unlock(&piezas);
+            pthread_cond_signal(&producidas);
+            sleep(1);
+        }
     }
-    cout << "\nPersonal del AREA 2 ha terminado de producir"<< endl;
-    cout << "''''''''''''''''''''" << endl;
-    pthread_exit(nullptr);
+    else{
+        cout << "\nPersonal del AREA 2 ha terminado de producir"<< endl;
+        cout << "''''''''''''''''''''" << endl;
+        pthread_exit(nullptr);
+    }
 }
 
 // --- Proceso area 3 ---
@@ -110,17 +122,21 @@ void* area3(void* arg){
     cout << "''''''''''''''''''''" << endl;
 
     //produccion de piezas en el area 3
-    for (int i = 0; i < ensambladosArea2 / cantidadPersonalArea3; i++){
-        pthread_mutex_lock(&piezas);
-        piezasEnsambladas++;
-        cout << "Persona del AREA 3: ensamblo 1 pieza" << endl;
-        pthread_mutex_unlock(&piezas);
-        pthread_cond_signal(&producidas);
-        sleep(1);
+    if(ensambladosArea2 != cantPiezasTotales && piezasEnsambladas != cantPiezasTotales){
+        for (int i = 0; i < ensambladosArea2 / cantidadPersonalArea3; i++){
+            pthread_mutex_lock(&piezas);
+            piezasEnsambladas++;
+            cout << "Persona del AREA 3: ensamblo 1 pieza" << endl;
+            pthread_mutex_unlock(&piezas);
+            pthread_cond_signal(&producidas);
+            sleep(1);
+        }
     }
-    cout << "\nPersonal del AREA 3 ha terminado de producir"<< endl;
-    cout << "''''''''''''''''''''" << endl;
-    pthread_exit(nullptr);
+    else{
+        cout << "\nPersonal del AREA 3 ha terminado de producir"<< endl;
+        cout << "''''''''''''''''''''" << endl;
+        pthread_exit(nullptr);
+    }
 }
 
 
@@ -141,13 +157,20 @@ int main(){
 
     pthread_mutex_init(&piezas, nullptr);
     pthread_cond_init(&producidas, nullptr);
-    //inicia 3 threads
-    pthread_t threads[cantProcesos];
-
-    for (int i = 0; i < cantProcesos; i++){
-        pthread_create(&threads[i], nullptr, &area1, nullptr);
-        pthread_create(&threads[i], nullptr, &area2, nullptr);
-        pthread_create(&threads[i], nullptr, &area3, nullptr);
+    //inicia con la cantidad de procesos que se crean los thread
+    pthread_t threads[1];
+    
+    cantidadPiezasPorArea1 = cantPiezasTotales / cantidadPersonalArea1;
+    for (int i = 0; i < 1; i++){
+        for (int i = 0; i < cantidadPersonalArea1; i++){
+            pthread_create(&threads[i], nullptr, &area1, nullptr);
+        }
+        for (int i = 0; i < cantidadPersonalArea2; i++){
+            pthread_create(&threads[i], nullptr, &area2, nullptr);
+        }
+        for (int i = 0; i < cantidadPersonalArea3; i++){
+            pthread_create(&threads[i], nullptr, &area3, nullptr);
+        }
     }
     
     for(auto thread : threads){
