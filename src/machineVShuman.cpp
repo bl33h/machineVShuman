@@ -4,7 +4,7 @@ Copyright (C), 2022-2023, bl33h, MelissaPerez09, FabianJuarez182, SebasJuarez
 FileName: machineVShuman
 @version: VI
 Creation: 06/10/2022
-Last modification: 10/10/2022
+Last modification: 22/10/2022
 ----------------------------------------------------------------------------------------------------
 * Descripcion: 
 * Establecer la eficiencia y rentabilidad a largo plazo de la produccion de una 
@@ -12,55 +12,32 @@ Last modification: 10/10/2022
 -----------------------------------------------------------------*/
 
 // Librerias
-#include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <iostream>
 using namespace std;
 
-// Mutex lock
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+// Threads mutex y condicional
+pthread_mutex_t piezas;
+pthread_cond_t producidas;
 
-// Variables
+// Variables a solicitar
 string tipoTrabajo;
-int cantProcesos;
-/* meter esta en el main por la cantidad de Personal int tiempoEjecucion[cantidadPersonal];*/
 int inversionMaquina;
-int cantidadPersonalArea1;
-int cantidadPersonalArea2;
-int cantidadPersonalArea3;
 int salarioPersonal;
-int cantidadOperadores;
-int salarioOperadores;
-int presupuesto;
-int proyeccion;
-int cantPiezasTotales;
-int ensamblajeMaquina = 0;
-int piezasPMin;
-int contador;
-int enEspera = 0;
-int cantPiezasT=0;
 
-// --- Estructura con la informacion de la empresa ---
-struct datosEmpresa
-{
-    pthread_t thread;
-    int contador;
-};
+// Variables fijas
+int cantProcesos = 3;               //hilos a crear
+int cantPiezasTotales = 10;         //piezas totales a producir
+int cantidadPersonalArea1 = 3;      //personas en area 1
+int cantidadPersonalArea2 = 3;      //personas en area 2
+int cantidadPersonalArea3 = 3;      //personas en area 3
+int ensambladosArea1 = 0;           //contador para piezas ensambladas en area 1
+int ensambladosArea2 = 0;           //contador para piezas ensambladas en area 2
 
-// --- Estructura con la informacion del empleado ---
-struct datosEmpleado
-{
-    pthread_t thread;
-    int cantProcesos = 0;
-    int cantPiezas = 0;
-    int contador = 0;
-};
 
 // --- Estructura con la informacion de los costos ---
-struct costo{
-    pthread_t thread;
+struct costos{
     int costoFijoEnergia;
     int costoFijoAgua;
     int costoFijoMateriaPrima;
@@ -78,25 +55,23 @@ void* costoProduccion(void *arg)
     return NULL;
 }
 
-// --- Metodo produccion por parte del personal humano ---
-void* procesoPersonal(void *args)
-{
-   datosEmpleado *produccionStructure = (datosEmpleado*) args; // *Structure call
-    // *Mutex lock*
-    while(produccionStructure->cantPiezas != cantPiezasT && cantPiezasT > 0)
-    {
-        if (cantPiezasT > 0){
-            pthread_mutex_lock(&mutex);
-            produccionStructure->cantPiezas = produccionStructure->cantPiezas + piezasPMin;
-            cantPiezasT = cantPiezasT - piezasPMin;
-            cout<<"El proceso No."<< produccionStructure->contador << ", realizado por el personal humano, ha producido " << piezasPMin <<  " piezas." << cantPiezasT <<endl;
-            // *Mutex Unlock*
-            pthread_mutex_unlock(&mutex);
-        }
-        else{
-            pthread_exit(NULL);
-        }
+// --- Proceso area 1 ---
+void* area1(void* arg){
+    //numero del personas del personal
+    int numPersona = *(int*) arg;
+
+    //produccion de piezas en el area 1
+    for (int i = 0; i < cantPiezasTotales; i++){
+        pthread_mutex_lock(&piezas);
+        ensambladosArea1++;
+        cout << "Persona del AREA 1: produjo 1 pieza" << endl;
+        pthread_mutex_unlock(&piezas);
+        pthread_cond_signal(&producidas);
+        sleep(1);
     }
+    cout << "\nPersonal del AREA 1 ha terminado de producir"<< endl;
+    cout << "''''''''''''''''''''" << endl;
+    pthread_exit(nullptr);
 }
 
 // --- Metodo produccion por parte de la maquina ---
@@ -140,52 +115,28 @@ int main()
     // Informacion general de la empresa
     cout << "\nFinalidad de su empresa (fabrica, maquila, entre otros): ";
     cin >> tipoTrabajo;
-    cout << "Cantidad de procesos a realizar en la produccion: ";
-    cin >> cantProcesos;
-    cout << "Piezas producidas por minuto: ";
-    cin >> piezasPMin;
-    cout << "Cantidad de piezas totales a producir: ";
-    cin >> cantPiezasTotales;
-    cout << "\nNumero de personas que conforman el personal de la 1ra fase (sin contar a los operadores): ";
-    cin >> cantidadPersonalArea1;
-    cout << "\nNumero de personas que conforman el personal de la 2da fase (sin contar a los operadores): ";
-    cin >> cantidadPersonalArea2;
-    cout << "\nNumero de personas que conforman el personal de la 3ra fase (sin contar a los operadores): ";
-    cin >> cantidadPersonalArea3;
-    cout << "Numero de personas que conforman al grupo de los operadores: ";
-    cin >> cantidadOperadores;
+   
     // Inversion en maquina y personal humano
     cout << "\nSalario del personal en dolares ($): ";
     cin >> salarioPersonal;
-    cout << "Salario de los operadores en dolares ($): ";
-    cin >> salarioOperadores;
     cout << "Inversion de la maquina en dolares ($): ";
     cin >> inversionMaquina;
-    // Presupuesto
-    cout << "\nPresupuesto inicial en dolares ($): ";
-    cin >> presupuesto;
+
     cout << "Inicializando los procesos...\n";
-    cantPiezasT = cantPiezasTotales;
-    datosEmpleado estructuraDatosEmpleado[cantidadPersonalArea1];
-    for(int i=0; i<cantidadPersonalArea1; i++){
-        estructuraDatosEmpleado[i].cantProcesos = cantPiezasT;
-        estructuraDatosEmpleado[i].contador = i;
-    }
-    for (int k = 0; k < cantidadPersonalArea1; k++){
-            pthread_create(&estructuraDatosEmpleado[k].thread, NULL, procesoPersonal, ( void *)&estructuraDatosEmpleado[k]);
-    }
-    for(int l = 0; l < cantidadPersonalArea1; l++){
-        pthread_join(estructuraDatosEmpleado[l].thread, NULL);
-    }
-    pthread_mutex_init(&mutex, nullptr);
+
+    pthread_mutex_init(&piezas, nullptr);
+    pthread_cond_init(&producidas, nullptr);
+    //inicia 3 threads
     pthread_t threads[cantProcesos];
-    
+
     for (int i = 0; i < cantProcesos; i++){
         if (i == 2){
-            pthread_create(&threads[i], nullptr, &procesoMaquina2, nullptr);
+            //area2
+            //pthread_create(&threads[i], nullptr, &area2, nullptr);
         }
         else{
-            pthread_create(&threads[i], nullptr, &procesoMaquina, nullptr);
+            //area1
+            pthread_create(&threads[i], nullptr, &area1, nullptr);
         }
     }
     
