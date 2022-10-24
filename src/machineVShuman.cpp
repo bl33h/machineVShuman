@@ -33,6 +33,7 @@ using namespace std;
 // Threads mutex y condicional
 pthread_mutex_t piezas;
 pthread_cond_t producidas;
+sem_t semaphore;
 
 // Variables a solicitar
 string tipoTrabajo;
@@ -59,6 +60,22 @@ struct costo{
     int costoVariable;  
 };
 
+// --- Estructura para cada area de produccion de personal ---
+struct Area1{
+    pthread_t thread;
+    int cantidadPiezasPorArea1a;
+};
+
+struct Area2{
+    pthread_t thread;
+    int cantidadPiezasPorArea2a;
+};
+
+struct Area3{
+    pthread_t thread;
+    int cantidadPiezasPorArea3a;
+};
+
 // --- Metodo costos ---
 void* costoProduccion(void *arg)
 {
@@ -72,15 +89,16 @@ void* costoProduccion(void *arg)
 
 // --- Proceso area 1 ---
 void* area1(void* arg){
-
+    Area1 * ws;
+    ws = (Area1 *)arg;
     //produccion de piezas en el area 1
-    for (int i = 0; i < cantPiezasTotales / cantidadPersonalArea1; i++){
+    for (int i = 0; i < ws->cantidadPiezasPorArea1a; i++){
         pthread_mutex_lock(&piezas);
         ensambladosArea1++;
         cout << "Persona del AREA 1: ensamblo 1 pieza" << endl;
         pthread_mutex_unlock(&piezas);
         pthread_cond_signal(&producidas);
-        sleep(1);
+        sleep(3);
     }
     cout << "\nPersonal del AREA 1 ha terminado de producir"<< endl;
     cout << "''''''''''''''''''''" << endl;
@@ -90,6 +108,8 @@ void* area1(void* arg){
 // --- Proceso area 2 ---
 void* area2(void* arg){
     pthread_mutex_lock(&piezas);
+    Area2 * ws;
+    ws = (Area2 *)arg;
     //cada 5 piezas ensambladas por el area 1, comienza a ensamblar
     while (ensambladosArea1 < 5){
         pthread_cond_wait(&producidas, &piezas);
@@ -99,13 +119,13 @@ void* area2(void* arg){
     cout << "''''''''''''''''''''" << endl;
 
     //produccion de piezas en el area 2
-    for (int i = 0; i < ensambladosArea1 / cantidadPersonalArea2 ; i++){
+    for (int i = 0; i < ws->cantidadPiezasPorArea2a; i++){
         pthread_mutex_lock(&piezas);
         ensambladosArea2++;
         cout << "Persona del AREA 2: ensamblo 1 pieza" << endl;
         pthread_mutex_unlock(&piezas);
         pthread_cond_signal(&producidas);
-        sleep(1);
+        sleep(3);
     }
     cout << "\nPersonal del AREA 2 ha terminado de producir"<< endl;
     cout << "''''''''''''''''''''" << endl;
@@ -115,6 +135,8 @@ void* area2(void* arg){
 // --- Proceso area 3 ---
 void* area3(void* arg){
     pthread_mutex_lock(&piezas);
+    Area3 * ws;
+    ws = (Area3 *)arg;
     //cada 5 piezas ensambladas por el area 2, comienza a ensamblar
     while (ensambladosArea2 < 5){
         pthread_cond_wait(&producidas, &piezas);
@@ -125,17 +147,19 @@ void* area3(void* arg){
 
     //produccion de piezas en el area 3
     for (int i = 0; i < ensambladosArea2 / cantidadPersonalArea3; i++){
-        pthread_mutex_lock(&piezas);
+        sem_wait(&semaphore);
         piezasEnsambladas++;
         cout << "Persona del AREA 3: ensamblo 1 pieza" << endl;
         pthread_mutex_unlock(&piezas);
         pthread_cond_signal(&producidas);
-        sleep(1);
+        sleep(3);
+        sem_post(&semaphore);
     }
     cout << "\nPersonal del AREA 3 ha terminado de producir"<< endl;
     cout << "''''''''''''''''''''" << endl;
     pthread_exit(nullptr);
 }
+
 
 // --- Estructura del control de la maquina ---
 struct controlMaquina{
@@ -190,21 +214,54 @@ int main(){
     cout << "Inicializando los procesos...\n\n";
     cout << "--- Produccion por parte del personal humano ---\n\n";
     
+    cout << "\nCantidad de piezas ensambladas: " << piezasEnsambladas << endl;
     pthread_mutex_init(&piezas, nullptr);
     pthread_cond_init(&producidas, nullptr);
+    sem_init(&semaphore, 0, 2);
     //inicia con la cantidad de procesos que se crean los thread
     pthread_t threads[1];
-    
+    Area1 area[cantidadPersonalArea1];
+    Area2 arecita[cantidadPersonalArea2];
+    Area3 aresota[cantidadPersonalArea3];
     cantidadPiezasPorArea1 = cantPiezasTotales / cantidadPersonalArea1;
     for (int i = 0; i < 1; i++){
+        // AREA 1
         for (int i = 0; i < cantidadPersonalArea1; i++){
-            pthread_create(&threads[i], nullptr, &area1, nullptr);
+            if(i==cantidadPersonalArea1-1){
+                area[i].cantidadPiezasPorArea1a = cantPiezasTotales / cantidadPersonalArea1 + cantPiezasTotales%cantidadPersonalArea1;
+            }
+            else{
+                area[i].cantidadPiezasPorArea1a = cantPiezasTotales / cantidadPersonalArea1;
+            }
+        }
+        for (int i = 0; i < cantidadPersonalArea1; i++){
+            pthread_create(&threads[i], nullptr, &area1, ( void *)&area[i]);
+        }
+        
+        // AREA 2
+        for (int i = 0; i < cantidadPersonalArea2; i++){
+            if(i==cantidadPersonalArea2-1){
+                arecita[i].cantidadPiezasPorArea2a = cantPiezasTotales / cantidadPersonalArea2 + cantPiezasTotales%cantidadPersonalArea2;
+            }
+            else{
+                arecita[i].cantidadPiezasPorArea2a = cantPiezasTotales / cantidadPersonalArea2;
+            }
         }
         for (int i = 0; i < cantidadPersonalArea2; i++){
-            pthread_create(&threads[i], nullptr, &area2, nullptr);
+            pthread_create(&threads[i], nullptr, &area2, ( void *)&arecita[i]);
+        }
+        
+        // AREA 3
+        for (int i = 0; i < cantidadPersonalArea3; i++){
+            if(i==cantidadPersonalArea3-1){
+                aresota[i].cantidadPiezasPorArea3a = cantPiezasTotales / cantidadPersonalArea3 + cantPiezasTotales%cantidadPersonalArea3;
+            }
+            else{
+                aresota[i].cantidadPiezasPorArea3a = cantPiezasTotales / cantidadPersonalArea3;
+            }
         }
         for (int i = 0; i < cantidadPersonalArea3; i++){
-            pthread_create(&threads[i], nullptr, &area3, nullptr);
+            pthread_create(&threads[i], nullptr, &area3, ( void *)&aresota[i]);
         }
     }
     
@@ -213,8 +270,12 @@ int main(){
     }
     
     cout << "\nCantidad de piezas ensambladas: " << piezasEnsambladas << endl;
-    //pthread_exit(NULL);
     
+    //libera memoria
+    sem_destroy(&semaphore);
+    pthread_mutex_destroy(&piezas);
+    pthread_cond_destroy(&producidas);
+
     cout << "--- Produccion por parte de la maquina ---\n\n";
     double worker;
     bool produccion = false;
