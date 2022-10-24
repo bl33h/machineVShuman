@@ -23,10 +23,10 @@ Last modification: 22/10/2022
 using namespace std;
 
 
-
 // Threads mutex y condicional
 pthread_mutex_t piezas;
 pthread_cond_t producidas;
+sem_t semaphore;
 
 // Variables a solicitar
 string tipoTrabajo;
@@ -38,7 +38,7 @@ int cantProcesos = 1;               //hilos a crear
 int cantPiezasTotales = 10;         //piezas totales a producir
 int cantidadPiezasPorArea1 = 0;     //Cantidad de piezas a generar en el area 1
 int cantidadPersonalArea1 = 2;      //personas en area 1
-int cantidadPersonalArea2 = 2;      //personas en area 2
+int cantidadPersonalArea2 = 1;      //personas en area 2
 int cantidadPersonalArea3 = 1;      //personas en area 3
 int ensambladosArea1 = 0;           //contador para piezas ensambladas en area 1
 int ensambladosArea2 = 0;           //contador para piezas ensambladas en area 2
@@ -119,12 +119,13 @@ void* area3(void* arg){
 
     //produccion de piezas en el area 3
     for (int i = 0; i < ensambladosArea2 / cantidadPersonalArea3; i++){
-        pthread_mutex_lock(&piezas);
+        sem_wait(&semaphore);
         piezasEnsambladas++;
         cout << "Persona del AREA 3: ensamblo 1 pieza" << endl;
         pthread_mutex_unlock(&piezas);
         pthread_cond_signal(&producidas);
         sleep(1);
+        sem_post(&semaphore);
     }
     cout << "\nPersonal del AREA 3 ha terminado de producir"<< endl;
     cout << "''''''''''''''''''''" << endl;
@@ -149,6 +150,7 @@ int main(){
 
     pthread_mutex_init(&piezas, nullptr);
     pthread_cond_init(&producidas, nullptr);
+    sem_init(&semaphore, 0, 2);
     //inicia con la cantidad de procesos que se crean los thread
     pthread_t threads[1];
     
@@ -171,5 +173,10 @@ int main(){
     
     cout << "\nCantidad de piezas ensambladas: " << piezasEnsambladas << endl;
     pthread_exit(NULL);
+    
+    //libera memoria
+    sem_destroy(&semaphore);
+    pthread_mutex_destroy(&piezas);
+    pthread_cond_destroy(&producidas);
     return 0;
 }
