@@ -2,7 +2,7 @@
 Copyright (C), 2022-2023, bl33h, MelissaPerez09, FabianJuarez182, SebasJuarez
 @author Sara Echeverria, Melissa Perez, Fabian Juarez, Sebastian Juarez
 FileName: machineVShuman
-@version: VI
+@version: VII
 Creation: 06/10/2022
 Last modification: 22/10/2022
 ----------------------------------------------------------------------------------------------------
@@ -37,8 +37,8 @@ int salarioPersonal;
 int cantProcesos = 1;               //hilos a crear
 int cantPiezasTotales = 10;         //piezas totales a producir
 int cantidadPiezasPorArea1 = 0;     //Cantidad de piezas a generar en el area 1
-int cantidadPersonalArea1 = 2;      //personas en area 1
-int cantidadPersonalArea2 = 1;      //personas en area 2
+int cantidadPersonalArea1 = 3;      //personas en area 1
+int cantidadPersonalArea2 = 2;      //personas en area 2
 int cantidadPersonalArea3 = 1;      //personas en area 3
 int ensambladosArea1 = 0;           //contador para piezas ensambladas en area 1
 int ensambladosArea2 = 0;           //contador para piezas ensambladas en area 2
@@ -51,6 +51,12 @@ struct costo{
     int costoFijoAgua;
     int costoFijoMateriaPrima;
     int costoVariable;  
+};
+
+struct Area1
+{
+    pthread_t thread;
+    int cantidadPiezasPorArea1a;
 };
 
 // --- Metodo costos ---
@@ -66,9 +72,10 @@ void* costoProduccion(void *arg)
 
 // --- Proceso area 1 ---
 void* area1(void* arg){
-
+    Area1 * ws;
+    ws = (Area1 *)arg;
     //produccion de piezas en el area 1
-    for (int i = 0; i < cantPiezasTotales / cantidadPersonalArea1; i++){
+    for (int i = 0; i < ws->cantidadPiezasPorArea1a; i++){
         pthread_mutex_lock(&piezas);
         ensambladosArea1++;
         cout << "Persona del AREA 1: ensamblo 1 pieza" << endl;
@@ -153,12 +160,21 @@ int main(){
     sem_init(&semaphore, 0, 2);
     //inicia con la cantidad de procesos que se crean los thread
     pthread_t threads[1];
-    
+    Area1 area[cantidadPersonalArea1];
     cantidadPiezasPorArea1 = cantPiezasTotales / cantidadPersonalArea1;
     for (int i = 0; i < 1; i++){
         for (int i = 0; i < cantidadPersonalArea1; i++){
-            pthread_create(&threads[i], nullptr, &area1, nullptr);
+            if(i==cantidadPersonalArea1-1){
+                area[i].cantidadPiezasPorArea1a = cantidadPersonalArea1 + cantPiezasTotales%cantidadPersonalArea1;
+            }
+            else{
+                area[i].cantidadPiezasPorArea1a = cantidadPersonalArea1;
+            }
         }
+        for (int i = 0; i < cantidadPersonalArea1; i++){
+            pthread_create(&threads[i], nullptr, &area1, ( void *)&area[i]);
+        }
+        
         for (int i = 0; i < cantidadPersonalArea2; i++){
             pthread_create(&threads[i], nullptr, &area2, nullptr);
         }
