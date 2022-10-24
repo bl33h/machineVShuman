@@ -2,7 +2,7 @@
 Copyright (C), 2022-2023, bl33h, MelissaPerez09, FabianJuarez182, SebasJuarez
 @author Sara Echeverria, Melissa Perez, Fabian Juarez, Sebastian Juarez
 FileName: machineVShuman
-@version: VII
+@version: VIII
 Creation: 06/10/2022
 Last modification: 23/10/2022
 ----------------------------------------------------------------------------------------------------
@@ -300,13 +300,10 @@ int main(){
             worker = pthread_create(&tid[2],&attr,maquina2,(void *)&produccionMaquina);
             worker = pthread_join(tid[2],NULL);
         }
-        worker = pthread_create(&tid[1],&attr,maquina1,(void *)&produccionMaquina);
-        worker = pthread_join(tid[1],NULL);
-        sleep(1);
-        if(produccionMaquina.piezasProceso2 == 10)
+        if(produccionMaquina.piezasProceso2 == 9)
         {
             produccionMaquina.piezasPorLaMaquina -= 4;
-            produccionMaquina.piezasProceso2 = 10;
+            produccionMaquina.piezasProceso2 = 9;
             produccion = true;
         }
         if((produccionMaquina.piezasPorLaMaquina % 5 == 0)||(produccionMaquina.piezasPorLaMaquina== 5))
